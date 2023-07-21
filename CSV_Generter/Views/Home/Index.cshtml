@@ -1,0 +1,61 @@
+﻿@model CSV_Generter.Models.InputOutputModel
+
+<h2>GPT-3.5 Project</h2>
+
+<div id="chat-container">
+    <div id="chat-history">
+        @if (TempData["ChatHistory"] != null)
+        {
+            var chatHistory = (List<string>)TempData["ChatHistory"];
+            foreach (var message in chatHistory)
+            {
+                <p>@message</p>
+            }
+        }
+    </div>
+    @using (Html.BeginForm("AnalyzeFile", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
+    {
+        <div>
+            <label for="prompt">Enter Prompt:</label>
+            <textarea id="prompt" name="Prompt" rows="4" cols="50" required>@(Model.Prompt ?? "")</textarea>
+        </div>
+        <div>
+            <label for="files">Upload Files:</label>
+            <input type="file" id="files" name="files" multiple />
+        </div>
+        <button type="submit">Submit</button>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Response))
+    {
+        <h3>Generated Response:</h3>
+        <p>@Model.Response</p>
+
+        <div>
+            <h3>Download Response:</h3>
+            <p><a href="@Url.Action("DownloadResponse", "Home")">Download</a></p>
+        </div>
+    }
+</div>
+
+@section scripts {
+    <script>
+        // Append the user message and scroll to the bottom of the chat
+        function appendUserMessage(message) {
+            $('#chat-history').append(`<p><strong>User:</strong> ${message}</p>`);
+            scrollToBottom();
+        }
+
+        // Append the AI response and scroll to the bottom of the chat
+        function appendAIResponse(message) {
+            $('#chat-history').append(`<p><strong>AI:</strong> ${message}</p>`);
+            scrollToBottom();
+        }
+
+        // Scroll to the bottom of the chat container
+        function scrollToBottom() {
+            var chatHistory = document.getElementById('chat-history');
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+    </script>
+}
