@@ -9,6 +9,7 @@ namespace CSV_Generter.Models
         public string Prompt { get; set; }
         public string Response { get; set; }
         public string ResponseFileUrl { get; set; }
+        public List<string> ConversationHistory { get; set; } = new List<string>();
         //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
     }
 }

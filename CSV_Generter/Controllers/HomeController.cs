@@ -1,36 +1,43 @@
 ﻿using CSV_Generter.Models;
 using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Net.Http;
+
 
 using System.Text;
-
 using Microsoft.Net.Http.Headers;
-
 using Newtonsoft.Json;
+using System.Threading.Tasks;
+using System;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace CSV_Generter.Controllers
-
 {
     public class HomeController : Controller
     {
-        private const string API_KEY = "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";
+        private const string API_KEY = "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";
         private static readonly HttpClient client = new HttpClient();
-        private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
-        {
-            _logger = logger;
-        }
 
         public IActionResult Index()
         {
             var model = new InputOutputModel();
 
+            // Retrieve conversation history from session or persistent storage
+
+            var serializedHistory = HttpContext.Session.GetString("ConversationHistory");
+            model.ConversationHistory = !string.IsNullOrEmpty(serializedHistory)
+                ? JsonConvert.DeserializeObject<List<string>>(serializedHistory)
+                : new List<string>();
             if (TempData["ChatHistory"] != null)
             {
                 var chatHistory = (List<string>)TempData["ChatHistory"];
-                model.Prompt = chatHistory[chatHistory.Count - 2].Substring(6);
+                foreach (var message in chatHistory)
+                {
+                    model.ConversationHistory.Add(message);
+                }
             }
 
             return View(model);
@@ -56,27 +63,28 @@ namespace CSV_Generter.Controllers
                     {
                         using (var reader = new StreamReader(file.OpenReadStream()))
                         {
-                            fileContents.AppendLine($"{file.FileName}: {reader.ReadToEnd()}");
+                            fileContents.AppendLine($"{file.FileName}: {reader.ReadToEnd()}\n");
                         }
                     }
+
+                    // Build the conversation history including all past prompts and responses
+                    var conversationHistory = new List<object>
+                    {
+                        new { role = "system", content = "File Analysis" }
+                    };
+
+                    foreach (var message in model.ConversationHistory)
+                    {
+                        conversationHistory.Add(new { role = "user", content = message });
+                    }
+
+                    conversationHistory.Add(new { role = "user", content = $"{fileContents}\n{model.Prompt}\nnote: give only response which only has result.dont give process,description and explanation" });
 
                     // Use the CSV file contents in the prompt
                     var options = new
                     {
                         model = "gpt-3.5-turbo",
-                        messages = new[]
-                        {
-                            new
-                            {
-                                role = "system",
-                                content = "File Analysis"
-                            },
-                            new
-                            {
-                                role = "user",
-                                content = $"{fileContents}\n{model.Prompt}\nnote: give only response which only has result.dont give process,description and explaination"
-                            }
-                        },
+                        messages = conversationHistory,
                         max_tokens = 3500,
                         temperature = 0.2
                     };
@@ -94,6 +102,14 @@ namespace CSV_Generter.Controllers
                     string result = jsonResponse.choices[0].message.content;
 
                     model.Response = result;
+
+                    // Update conversation history with the user's prompt and AI's response
+                    model.ConversationHistory.Add($"User: {model.Prompt}");
+                    model.ConversationHistory.Add($"AI: {result}");
+
+                    // Save conversation history to session or persistent storage
+                    var serializedHistory = JsonConvert.SerializeObject(model.ConversationHistory);
+                    HttpContext.Session.SetString("ConversationHistory", serializedHistory);
 
                     if (TempData["ChatHistory"] == null)
                     {
@@ -111,23 +127,23 @@ namespace CSV_Generter.Controllers
                 }
                 else
                 {
-                    // No files uploaded, use model.Prompt directly
+                    var conversationHistory = new List<object>
+                    {
+                        new { role = "system", content = "File Analysis" }
+                    };
+
+                    foreach (var message in model.ConversationHistory)
+                    {
+                        conversationHistory.Add(new { role = "user", content = message });
+                    }
+
+                    conversationHistory.Add(new { role = "user", content = $"{model.Prompt}\nnote: give only response which only has result.dont give process,description and explanation" });
+
+                    // Use the CSV file contents in the prompt
                     var options = new
                     {
                         model = "gpt-3.5-turbo",
-                        messages = new[]
-                        {
-                            new
-                            {
-                                role = "system",
-                                content = "File Analysis"
-                            },
-                            new
-                            {
-                                role = "user",
-                                content = $"{model.Prompt}\nnote: give only response which only has result.dont give process,description and explaination"
-                            }
-                        },
+                        messages = conversationHistory,
                         max_tokens = 3500,
                         temperature = 0.2
                     };
@@ -145,6 +161,15 @@ namespace CSV_Generter.Controllers
                     string result = jsonResponse.choices[0].message.content;
 
                     model.Response = result;
+
+                    // Update conversation history with the user's prompt and AI's response
+                    model.ConversationHistory.Add($"User: {model.Prompt}");
+                    model.ConversationHistory.Add($"AI: {result}");
+
+                    // Save conversation history to session or persistent storage
+                    var serializedHistory = JsonConvert.SerializeObject(model.ConversationHistory);
+                    HttpContext.Session.SetString("ConversationHistory", serializedHistory);
+
 
                     if (TempData["ChatHistory"] == null)
                     {
@@ -167,12 +192,15 @@ namespace CSV_Generter.Controllers
             }
         }
 
+      
+
         private string GetCsvFileNamesAsString(List<IFormFile> files)
         {
             var fileNames = files.Select(file => file.FileName).ToList();
             return string.Join(", ", fileNames);
         }
 
+       
         public IActionResult DownloadResponse()
         {
             if (TempData.ContainsKey("GeneratedResponse"))
