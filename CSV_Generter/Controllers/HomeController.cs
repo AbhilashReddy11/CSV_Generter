@@ -1,43 +1,64 @@
-﻿using CSV_Generter.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using System.IO;
-using System.Net.Http;
-
-
 using System.Text;
 using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
-using System.Threading.Tasks;
 using System;
-using Microsoft.AspNetCore.Http.HttpResults;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+
+using PdfSharp.Drawing;
+
+using System.IO.Compression;
+using CSV_Generter.Models;
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Layout.Element;
+using System.Net.Mime;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using Ionic.Zip;
+using ZipFile = Ionic.Zip.ZipFile;
+using PdfWriter = iTextSharp.text.pdf.PdfWriter;
+using Document = iTextSharp.text.Document;
+using Paragraph = iTextSharp.text.Paragraph;
+using System.Formats.Asn1;
+using System.Globalization;
+using CsvHelper.Configuration;
+using CsvHelper;
 
 namespace CSV_Generter.Controllers
 {
     public class HomeController : Controller
     {
-        private const string API_KEY = "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";
+        private const string API_KEY = "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";
         private static readonly HttpClient client = new HttpClient();
 
+
+        private readonly IWebHostEnvironment _hostingEnvironment;
+
+        //public HomeController(IWebHostEnvironment hostingEnvironment)
+        //{
+        //    _hostingEnvironment = hostingEnvironment;
+        //}
+        private readonly ILogger<HomeController> _logger;
+
+        public HomeController(ILogger<HomeController> logger)
+        {
+            _logger = logger;
+        }
         public IActionResult Index()
         {
             var model = new InputOutputModel();
 
-            // Retrieve conversation history from session or persistent storage
-
-            var serializedHistory = HttpContext.Session.GetString("ConversationHistory");
-            model.ConversationHistory = !string.IsNullOrEmpty(serializedHistory)
-                ? JsonConvert.DeserializeObject<List<string>>(serializedHistory)
-                : new List<string>();
             if (TempData["ChatHistory"] != null)
             {
                 var chatHistory = (List<string>)TempData["ChatHistory"];
-                foreach (var message in chatHistory)
-                {
-                    model.ConversationHistory.Add(message);
-                }
+                model.Prompt = chatHistory[chatHistory.Count - 2].Substring(6);
             }
 
             return View(model);
@@ -63,28 +84,27 @@ namespace CSV_Generter.Controllers
                     {
                         using (var reader = new StreamReader(file.OpenReadStream()))
                         {
-                            fileContents.AppendLine($"{file.FileName}: {reader.ReadToEnd()}\n");
+                            fileContents.AppendLine($"{file.FileName}: {reader.ReadToEnd()}");
                         }
                     }
-
-                    // Build the conversation history including all past prompts and responses
-                    var conversationHistory = new List<object>
-                    {
-                        new { role = "system", content = "File Analysis" }
-                    };
-
-                    foreach (var message in model.ConversationHistory)
-                    {
-                        conversationHistory.Add(new { role = "user", content = message });
-                    }
-
-                    conversationHistory.Add(new { role = "user", content = $"{fileContents}\n{model.Prompt}\nnote: give only response which only has result.dont give process,description and explanation" });
 
                     // Use the CSV file contents in the prompt
                     var options = new
                     {
                         model = "gpt-3.5-turbo",
-                        messages = conversationHistory,
+                        messages = new[]
+                        {
+                            new
+                            {
+                                role = "system",
+                                content = "File Analysis"
+                            },
+                            new
+                            {
+                                role = "user",
+                                content = $"{fileContents}\n{model.Prompt}\nnote: give only response which only has result.dont give process,description and explaination"
+                            }
+                        },
                         max_tokens = 3500,
                         temperature = 0.2
                     };
@@ -102,14 +122,6 @@ namespace CSV_Generter.Controllers
                     string result = jsonResponse.choices[0].message.content;
 
                     model.Response = result;
-
-                    // Update conversation history with the user's prompt and AI's response
-                    model.ConversationHistory.Add($"User: {model.Prompt}");
-                    model.ConversationHistory.Add($"AI: {result}");
-
-                    // Save conversation history to session or persistent storage
-                    var serializedHistory = JsonConvert.SerializeObject(model.ConversationHistory);
-                    HttpContext.Session.SetString("ConversationHistory", serializedHistory);
 
                     if (TempData["ChatHistory"] == null)
                     {
@@ -127,23 +139,23 @@ namespace CSV_Generter.Controllers
                 }
                 else
                 {
-                    var conversationHistory = new List<object>
-                    {
-                        new { role = "system", content = "File Analysis" }
-                    };
-
-                    foreach (var message in model.ConversationHistory)
-                    {
-                        conversationHistory.Add(new { role = "user", content = message });
-                    }
-
-                    conversationHistory.Add(new { role = "user", content = $"{model.Prompt}\nnote: give only response which only has result.dont give process,description and explanation" });
-
-                    // Use the CSV file contents in the prompt
+                    // No files uploaded, use model.Prompt directly
                     var options = new
                     {
                         model = "gpt-3.5-turbo",
-                        messages = conversationHistory,
+                        messages = new[]
+                        {
+                            new
+                            {
+                                role = "system",
+                                content = "File Analysis"
+                            },
+                            new
+                            {
+                                role = "user",
+                                content = $"{model.Prompt}\nnote: give only response which only has result.dont give process,description and explaination"
+                            }
+                        },
                         max_tokens = 3500,
                         temperature = 0.2
                     };
@@ -161,15 +173,6 @@ namespace CSV_Generter.Controllers
                     string result = jsonResponse.choices[0].message.content;
 
                     model.Response = result;
-
-                    // Update conversation history with the user's prompt and AI's response
-                    model.ConversationHistory.Add($"User: {model.Prompt}");
-                    model.ConversationHistory.Add($"AI: {result}");
-
-                    // Save conversation history to session or persistent storage
-                    var serializedHistory = JsonConvert.SerializeObject(model.ConversationHistory);
-                    HttpContext.Session.SetString("ConversationHistory", serializedHistory);
-
 
                     if (TempData["ChatHistory"] == null)
                     {
@@ -192,15 +195,12 @@ namespace CSV_Generter.Controllers
             }
         }
 
-      
-
         private string GetCsvFileNamesAsString(List<IFormFile> files)
         {
             var fileNames = files.Select(file => file.FileName).ToList();
             return string.Join(", ", fileNames);
         }
 
-       
         public IActionResult DownloadResponse()
         {
             if (TempData.ContainsKey("GeneratedResponse"))
@@ -228,6 +228,85 @@ namespace CSV_Generter.Controllers
 
             return Content("Response not found.");
         }
-    }
 
+
+        public IActionResult DownloadPdfs(string Response)
+        {
+            // Create a configuration to handle reading the CSV data
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture);
+
+            // Create a CSV reader
+            using (var reader = new StringReader(Response))
+            using (var csv = new CsvReader(reader, config))
+            {
+                // Read the CSV data and convert it to a list of dictionaries
+                var records = csv.GetRecords<dynamic>();
+
+                // Create a list to store the PDF file paths
+                var pdfFiles = new List<string>();
+
+                // Process each row and generate PDFs with column-value pairs
+                foreach (var record in records)
+                {
+                    // Generate the PDF content from column-value pairs
+                    var pdfContent = new StringBuilder();
+
+                    foreach (var property in ((IDictionary<string, object>)record))
+                    {
+                        var column = property.Key;
+                        var value = property.Value;
+
+                        pdfContent.AppendLine($"{column}: {value}");
+                    }
+
+                    // Generate the PDF from the content and store it in a temporary folder
+                    byte[] pdfBytes = GeneratePdfFromText(pdfContent.ToString());
+                    string fileName = $"{Guid.NewGuid().ToString()}.pdf";
+                    string tempFolder = Path.Combine(Path.GetTempPath(), "PDFs");
+                    Directory.CreateDirectory(tempFolder);
+                    string filePath = Path.Combine(tempFolder, fileName);
+                    System.IO.File.WriteAllBytes(filePath, pdfBytes);
+                    pdfFiles.Add(filePath);
+                }
+
+                // Create a memory stream to hold the ZIP file
+                using (MemoryStream zipStream = new MemoryStream())
+                {
+                    // Create a ZIP archive and add the PDFs to it
+                    using (ZipArchive zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+                    {
+                        foreach (var pdfFile in pdfFiles)
+                        {
+                            string entryName = Path.GetFileName(pdfFile);
+                            zip.CreateEntryFromFile(pdfFile, entryName);
+                        }
+                    }
+
+                    // Set the Content-Disposition header to suggest the file name
+                    string zipFileName = "PDFs.zip";
+
+                    // Return the ZIP file as a file for download
+                    return File(zipStream.ToArray(), "application/zip", zipFileName);
+                }
+            }
+        }
+
+
+            private byte[] GeneratePdfFromText(string text)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                Document doc = new Document();
+                PdfWriter writer = PdfWriter.GetInstance(doc, ms);
+
+                doc.Open();
+                doc.Add(new Paragraph(text));
+                doc.Close();
+
+                return ms.ToArray();
+            }
+        }
+
+    }
 }
+

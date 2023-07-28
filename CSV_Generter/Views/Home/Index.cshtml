@@ -33,7 +33,13 @@
 
         <div>
             <h3>Download Response:</h3>
-            <p><a href="@Url.Action("DownloadResponse", "Home")">Download</a></p>
+            <p><a href="@Url.Action("DownloadResponse", "Home")">Download CSV</a></p>
+
+            <!-- New download button for PDFs -->
+
+            <h3>Download PDFs:</h3>
+            <p><a href="@Url.Action("DownloadPdfs", "Home", new { Response = Model.Response })">Download PDFs</a></p>
+            }
         </div>
     }
 </div>
