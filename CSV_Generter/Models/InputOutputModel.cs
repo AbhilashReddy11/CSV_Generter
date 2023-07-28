@@ -9,7 +9,7 @@ namespace CSV_Generter.Models
         public string Prompt { get; set; }
         public string Response { get; set; }
         public string ResponseFileUrl { get; set; }
-       
-        //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
+
+        //lKBD40bX5sUEtBBk8UE4T3BlbkFJhqIsLUH1YdahrFYbyPyH
     }
 }

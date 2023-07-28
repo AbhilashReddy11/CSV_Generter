@@ -35,7 +35,8 @@ namespace CSV_Generter.Controllers
 {
     public class HomeController : Controller
     {
-        private const string API_KEY = "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";
+        //lKBD40bX5sUEtBBk8UE4T3BlbkFJhqIsLUH1YdahrFYbyPyH
+        private const string API_KEY = "sk-//";
         private static readonly HttpClient client = new HttpClient();
 
 
@@ -231,7 +232,14 @@ namespace CSV_Generter.Controllers
 
 
         public IActionResult DownloadPdfs(string Response)
+
         {
+           
+            int colonIndex = Response.IndexOf(":");
+            if (colonIndex >= 0 && colonIndex < Response.Length - 1)
+            {
+                Response = Response.Substring(colonIndex + 1).Trim();
+            }
             // Create a configuration to handle reading the CSV data
             var config = new CsvConfiguration(CultureInfo.InvariantCulture);
 
@@ -292,7 +300,7 @@ namespace CSV_Generter.Controllers
         }
 
 
-            private byte[] GeneratePdfFromText(string text)
+        private byte[] GeneratePdfFromText(string text)
         {
             using (MemoryStream ms = new MemoryStream())
             {
@@ -309,4 +317,3 @@ namespace CSV_Generter.Controllers
 
     }
 }
-
