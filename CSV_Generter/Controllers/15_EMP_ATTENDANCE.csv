@@ -1,0 +1,16 @@
+sno,emp name,total present days,type,designation
+1,John Doe,20,billable,Software engg
+2,Jane Smith,18,billable,Senior software engineer
+3,Michael Johnson,15,non-billable,Developer
+4,Sarah Williams,22,billable,IT Consultant
+5,David Brown,19,billable,Software engg
+6,Emily Davis,16,non-billable,Developer
+7,Robert Wilson,21,billable,Senior software engineer
+8,Lisa Taylor,17,non-billable,IT Consultant
+9,Matthew Anderson,22,billable,Software engg
+10,Amanda Martinez,20,billable,Developer
+11,James Thompson,19,non-billable,Senior software engineer
+12,Olivia Garcia,22,billable,IT Consultant
+13,William Rodriguez,18,billable,Software engg
+14,Sophia Hernandez,15,non-billable,Developer
+15,Joseph Lopez,22,billable,Senior software engineer

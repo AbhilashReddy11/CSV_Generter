@@ -1,0 +1,16 @@
+prmopts:
+1.create a csv for 15 employees with columns sno, emp name, total prsent days(out of 22 working days  and consider some days as leave) , type(billable/non-billable, consider some random employees  as billable and some as non-billable),designation(Software engg/senior software
+engineer/developer/ITConsultant).
+2.Calculate the following for billable employees. Total billable hours - 8, Bill Rate -
+Variable on the basis of designation (Software engg/senior software
+engineer/developer/ITConsultant). Use synthetic Data for the month.
+3.Calculate percentage of employee productivity for both, the billable and
+non-billable employees And add those in the same csv which i have provided.(also consider some package for non-billable employees)
+4.Consider a payroll system with various taxes and allowances for employees. The taxes include PF (5% of the total salary), insurance (a fixed amount of 2000), and labor tax (0.5% of the total salary). The monthly salary of each employee varies based on their designation. The fields needed in the payroll CSV are employeename, total salary, all the taxes (PF, insurance, labor tax), miscellaneous allowance, bonus, and total amount.
+
+To calculate the bonus, consider the top 5 billable and non-billable employees based on their attendance. Add 15000 as a bonus for these top 5 employees, and set the bonus as 0 for the remaining employees.
+
+Now, let's ensure the correct calculation for the 'total amount' in the payroll CSV:
+total amount = total salary + bonus  - PF - labor tax - insurance
+{ex: total salary=50000,pf=2500,insurance=2000,labour tax=250,bonus=1500 then total amount=50000-2500-2000-250+15000=60250}
+Please generate the payroll CSV accordingly, considering the salaries based on different designations for employees. Ensure that the total amount is accurately calculated according to the mentioned formula

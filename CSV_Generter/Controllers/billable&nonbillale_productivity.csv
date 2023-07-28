@@ -1,0 +1,16 @@
+15_EMP_ATTENDANCE.csv: sno,emp name,total present days,type,designation,productivity_percentage
+1,John Doe,20,billable,Software engg,100%
+2,Jane Smith,18,billable,Senior software engineer,90%
+3,Michael Johnson,15,non-billable,Developer,75%
+4,Sarah Williams,22,billable,IT Consultant,100%
+5,David Brown,19,billable,Software engg,95%
+6,Emily Davis,16,non-billable,Developer,80%
+7,Robert Wilson,21,billable,Senior software engineer,105%
+8,Lisa Taylor,17,non-billable,IT Consultant,85%
+9,Matthew Anderson,22,billable,Software engg,100%
+10,Amanda Martinez,20,billable,Developer,100%
+11,James Thompson,19,non-billable,Senior software engineer,95%
+12,Olivia Garcia,22,billable,IT Consultant,100%
+13,William Rodriguez,18,billable,Software engg,90%
+14,Sophia Hernandez,15,non-billable,Developer,75%
+15,Joseph Lopez,22,billable,Senior software engineer,100%

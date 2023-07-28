@@ -1,0 +1,16 @@
+To calculate the Total Billable Hours and Bill Rate for the billable employees, we need to filter the data based on the "type" column where the value is "billable". Then, we can calculate the Total Billable Hours by multiplying the "total present days" column by 8. The Bill Rate will be based on the "designation" column.
+
+Here is the resulting CSV:
+
+sno,emp name,total present days,type,designation,Total Billable Hours,Bill Rate
+1,John Doe,20,billable,Software engg,160,50
+2,Jane Smith,18,billable,Senior software engineer,144,70
+4,Sarah Williams,22,billable,IT Consultant,176,90
+5,David Brown,19,billable,Software engg,152,50
+7,Robert Wilson,21,billable,Senior software engineer,168,70
+9,Matthew Anderson,22,billable,Software engg,176,50
+10,Amanda Martinez,20,billable,Developer,160,60
+13,William Rodriguez,18,billable,Software engg,144,50
+15,Joseph Lopez,22,billable,Senior software engineer,176,70
+
+Please note that the Bill Rate values are synthetic and randomly assigned based on the designation.
